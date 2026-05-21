@@ -1,0 +1,14 @@
+# Environments
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Data — per AIAP brief, do not commit the database
+data/agri.db
+
+# OS clutter
+.DS_Store
+
+# Notebook checkpoints
+.ipynb_checkpoints/
