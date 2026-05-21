@@ -33,6 +33,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.metrics import (
     classification_report,
+    confusion_matrix,
     f1_score,
     mean_absolute_error,
     mean_squared_error,
@@ -131,15 +132,25 @@ def _classification_metrics(
         y_pred (np.ndarray): Predicted (encoded) labels.
         labels (list[str]): Original class names, indexed by encoded value.
 
+    The confusion matrix is included as a plain list of lists (row = true
+    class, column = predicted class, both ordered as ``labels``) so it is
+    JSON-serialisable and visible in the saved metrics without rerunning.
+
     Returns:
-        dict[str, Any]: Accuracy, macro-F1, and the full per-class report.
+        dict[str, Any]: Accuracy, macro-F1, the per-class report, the ordered
+        class labels, and the confusion matrix.
     """
+    cm = confusion_matrix(y_true, y_pred)
     return {
         "accuracy": float((y_true == y_pred).mean()),
         "macro_f1": float(f1_score(y_true, y_pred, average="macro")),
         "per_class": classification_report(
             y_true, y_pred, target_names=labels, output_dict=True, zero_division=0
         ),
+        "confusion_matrix": {
+            "labels": list(labels),
+            "matrix": cm.tolist(),
+        },
     }
 
 
