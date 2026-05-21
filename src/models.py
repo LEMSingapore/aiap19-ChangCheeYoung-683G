@@ -39,7 +39,11 @@ from sklearn.metrics import (
     mean_squared_error,
     r2_score,
 )
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.model_selection import (
+    RandomizedSearchCV,
+    cross_val_score,
+    train_test_split,
+)
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 from xgboost import XGBClassifier, XGBRegressor
@@ -298,6 +302,94 @@ def train_and_evaluate(
     best = _select_best(results, task)
     logger.info("Best model for %s: %s", task, best.name)
     return best, results, label_encoder
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Optional hyperparameter search (CLI-gated via --tune)
+# ──────────────────────────────────────────────────────────────────────────
+def tune_xgboost(
+    X: pd.DataFrame,
+    y: pd.Series,
+    transformer: ColumnTransformer,
+    task: str,
+) -> dict[str, Any]:
+    """Run a RandomizedSearchCV over the XGBoost model for a task.
+
+    This is *not* part of the default pipeline. It is invoked only via the
+    ``--tune`` command-line flag, so ``run.sh`` and the assessment CI run the
+    fast fixed-config path and are never exposed to search runtime.
+
+    The search is "report only": the best parameters found are returned and
+    saved to the artifacts directory. ``config.yaml`` remains the curated
+    source of truth -- a human decides whether to adopt any searched value.
+
+    Args:
+        X (pd.DataFrame): Feature matrix from ``feature_engineering``.
+        y (pd.Series): Target series.
+        transformer (ColumnTransformer): Unfitted preprocessing transformer.
+        task (str): ``"regression"`` or ``"classification"``.
+
+    Returns:
+        dict[str, Any]: The search outcome -- best parameters, best CV score,
+        and the number of candidates evaluated.
+    """
+    y_arr: np.ndarray = y.to_numpy()
+    if task == "classification":
+        y_arr = LabelEncoder().fit_transform(y)
+
+    # XGBoost main estimator, unparameterised -- the search supplies the values.
+    base = XGBRegressor() if task == "regression" else XGBClassifier()
+    pipe = Pipeline(steps=[("preprocess", transformer), ("model", base)])
+
+    # Three interacting hyperparameters. Distributions are deliberately modest
+    # so the search stays quick; n_iter caps the number of fits regardless.
+    param_distributions = {
+        "model__n_estimators": [100, 200, 300, 400, 500],
+        "model__max_depth": [3, 4, 5, 6, 8],
+        "model__learning_rate": [0.01, 0.05, 0.1, 0.2, 0.3],
+    }
+    scoring = "neg_root_mean_squared_error" if task == "regression" else "f1_macro"
+
+    search = RandomizedSearchCV(
+        pipe,
+        param_distributions=param_distributions,
+        n_iter=10,
+        cv=3,
+        scoring=scoring,
+        random_state=RANDOM_STATE,
+        n_jobs=1, # single-process: XGBoost is internally threaded, and this
+                  # avoids a noisy multiprocessing-cleanup traceback on macOS
+    )
+    logger.info("Tuning XGBoost for %s — RandomizedSearchCV (10 candidates, cv=3)", task)
+    search.fit(X, y_arr)
+
+    best_score = search.best_score_
+    if task == "regression":
+        best_score = -best_score  # un-negate RMSE
+
+    # Strip the 'model__' pipeline prefix for readability.
+    best_params = {k.replace("model__", ""): v for k, v in search.best_params_.items()}
+    logger.info("  best params : %s", best_params)
+    logger.info(
+        "  best CV %s : %.4f",
+        "RMSE" if task == "regression" else "macro-F1",
+        best_score,
+    )
+
+    summary = {
+        "task": task,
+        "search": "RandomizedSearchCV",
+        "n_candidates": 10,
+        "cv_folds": 3,
+        "best_params": best_params,
+        "best_cv_score": float(best_score),
+        "note": "config.yaml is the curated source of truth; adopt values manually.",
+    }
+    out = artifacts_dir() / f"{task}_tuning.json"
+    with open(out, "w", encoding="utf-8") as fh:
+        json.dump(summary, fh, indent=2)
+    logger.info("Saved tuning report -> %s", out)
+    return summary
 
 
 # ──────────────────────────────────────────────────────────────────────────

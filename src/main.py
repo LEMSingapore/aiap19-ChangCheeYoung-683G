@@ -19,7 +19,7 @@ import logging
 import sys
 
 from feature_engineering import build_features
-from models import save_artifacts, train_and_evaluate
+from models import save_artifacts, train_and_evaluate, tune_xgboost
 from preprocessing import get_clean_data
 
 TASKS = ("regression", "classification")
@@ -54,30 +54,45 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="all",
         help="Which prediction task to run (default: all).",
     )
+    parser.add_argument(
+        "--tune",
+        action="store_true",
+        help="Run a RandomizedSearchCV hyperparameter search for the XGBoost "
+        "model(s) instead of the standard fixed-config run. Off by default; "
+        "run.sh and CI use the fast fixed-config path.",
+    )
     return parser.parse_args(argv)
 
 
-def run_task(task: str) -> None:
-    """Run the full pipeline for a single task.
+def run_task(task: str, tune: bool = False) -> None:
+    """Run the pipeline for a single task.
 
-    Loads and cleans the data, builds task-specific features, trains and
-    evaluates a baseline and a gradient-boosted model, then persists the best
-    model and a metrics summary to the artifacts directory.
+    Loads and cleans the data and builds task-specific features. With
+    ``tune=False`` (the default) it trains and evaluates a baseline and a
+    gradient-boosted model and persists the best one. With ``tune=True`` it
+    instead runs a RandomizedSearchCV hyperparameter search for the XGBoost
+    model and saves a tuning report -- the standard train/evaluate path is
+    skipped.
 
     Args:
         task (str): Either ``"regression"`` or ``"classification"``.
+        tune (bool): If True, run the hyperparameter search instead of the
+            standard pipeline.
     """
     log = logging.getLogger(__name__)
     log.info("=" * 60)
-    log.info("TASK: %s", task)
+    log.info("TASK: %s%s", task, "  [TUNE]" if tune else "")
     log.info("=" * 60)
 
     df = get_clean_data()
     X, y, transformer = build_features(df, task)
     log.info("Feature matrix : %d rows x %d columns", X.shape[0], X.shape[1])
 
-    best, all_results, label_encoder = train_and_evaluate(X, y, transformer, task)
-    save_artifacts(task, best, all_results, label_encoder)
+    if tune:
+        tune_xgboost(X, y, transformer, task)
+    else:
+        best, all_results, label_encoder = train_and_evaluate(X, y, transformer, task)
+        save_artifacts(task, best, all_results, label_encoder)
 
     log.info("Task '%s' complete.", task)
 
@@ -96,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
 
     tasks = TASKS if args.task == "all" else (args.task,)
     for task in tasks:
-        run_task(task)
+        run_task(task, tune=args.tune)
 
     logging.getLogger(__name__).info("Pipeline finished.")
     return 0

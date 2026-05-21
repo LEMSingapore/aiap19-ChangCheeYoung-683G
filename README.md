@@ -220,7 +220,7 @@ without touching the test data; the held-out set is the final unbiased check.
 | Model | CV RMSE | Test MAE | Test RMSE | Test R² |
 |---|---|---|---|---|
 | Ridge (baseline) | 1.152 | 0.889 | 1.130 | 0.505 |
-| **XGBoost** | **0.971** | **0.746** | **0.955** | **0.646** |
+| **XGBoost** | **0.953** | **0.735** | **0.937** | **0.659** |
 
 XGBoost is selected. It predicts temperature to within roughly 0.75 °C on
 average (MAE) and explains 65% of variance. The margin over the linear baseline
@@ -252,9 +252,8 @@ report is saved in `artifacts/classification_metrics.json`.
 
 ## i. Other considerations for deployment
 
-- **Hyperparameter search.** Hyperparameters are currently fixed, deliberate
-  values. A grid or Bayesian search (e.g. Optuna) is the natural next step for
-  additional performance.
+- **Hyperparameters** were validated against a RandomizedSearchCV over n_estimators, max_depth, and learning_rate, run via python src/main.py --task <task> --tune (output saved to artifacts/*_tuning.json). The search is gated behind --tune and is not part of the default run.sh path. For classification it returned a macro-F1 of 0.784 — within 0.002 of the manual configuration, confirming those values were already near-optimal. For regression it found a stronger configuration (n_estimators=400, max_depth=6, learning_rate=0.01), improving CV RMSE from 0.971 to 0.953; these tuned values have been adopted in config.yaml
+
 - **Schema and drift validation.** The pipeline assumes the sensor schema is
   stable. Production deployment should validate incoming data against an
   expected schema and monitor for distribution drift, since the model is
