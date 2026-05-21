@@ -1,0 +1,92 @@
+# ============================================================================
+# AgroTech ML Pipeline — Configuration
+# ----------------------------------------------------------------------------
+# Single source of truth for every tunable value. Edit this file to swap
+# algorithms, retune hyperparameters, or change preprocessing — no code change
+# is needed. Loaded by src/settings.py and consumed across the pipeline.
+# ============================================================================
+
+# ── Data source ─────────────────────────────────────────────────────────────
+data:
+  db_path: data/agri.db        # relative to repo root; resolved in settings.py
+  table_name: farm_data        # SQLite table holding the sensor readings
+  artifacts_dir: artifacts     # trained models + metrics are written here
+
+# ── Prediction targets (two tasks, per the assessment brief) ────────────────
+targets:
+  regression: "Temperature Sensor (°C)"
+  classification: "Plant Type-Stage"   # composite, constructed in preprocessing
+
+# ── Column groups (from the EDA — see eda.ipynb §4c, §6) ────────────────────
+columns:
+  # Nutrient sensors arrive as strings ('123 ppm'); coerced to numeric.
+  nutrient_cols:
+    - "Nutrient N Sensor (ppm)"
+    - "Nutrient P Sensor (ppm)"
+    - "Nutrient K Sensor (ppm)"
+  # Sensors with physically-impossible negative readings (sign-flip artefact).
+  # The abs() repair was validated empirically in eda.ipynb §4a-check.
+  sign_flip_cols:
+    - "Temperature Sensor (°C)"
+    - "Light Intensity Sensor (lux)"
+    - "EC Sensor (dS/m)"
+  # Source columns for the composite classification target. They are dropped
+  # from the CLASSIFICATION feature set to prevent target leakage (the target
+  # is built from them) but are valid features for the REGRESSION task.
+  plant_cols:
+    - "Plant Type"
+    - "Plant Stage"
+  # Confirmed uninformative in eda.ipynb §8b — uniform across all classes.
+  drop_cols:
+    - "System Location Code"
+    - "Previous Cycle Plant Type"
+
+# ── Preprocessing toggles ───────────────────────────────────────────────────
+preprocessing:
+  drop_duplicates: true          # 7,489 full-row duplicates (~13%); EDA §2
+  add_humidity_indicator: true   # 'humidity_present' flag; humidity 67.6% missing
+
+# ── Evaluation settings ─────────────────────────────────────────────────────
+evaluation:
+  random_state: 42               # fixes train/test split + model seeds
+  test_size: 0.20                # held-out test fraction
+  cv_folds: 5                    # k for cross-validation reporting
+
+# ── Models ──────────────────────────────────────────────────────────────────
+# Each task runs a simple baseline and a gradient-boosted model. Hyperparameters
+# below are deliberate, not defaults — see the rationale on each line. A full
+# grid/Optuna search is the documented next step (README §i).
+models:
+
+  regression:
+    baseline:
+      name: ridge
+      params:
+        alpha: 1.0               # mild L2; nutrient cluster is multicollinear
+
+    main:
+      name: xgboost
+      params:
+        n_estimators: 300        # enough trees to fit; capped for CI runtime
+        max_depth: 5             # shallow — guards against overfitting 49k rows
+        learning_rate: 0.1       # standard step size paired with 300 trees
+        subsample: 0.9           # row subsampling — light regularisation
+        colsample_bytree: 0.9    # feature subsampling per tree
+        random_state: 42
+
+  classification:
+    baseline:
+      name: logistic_regression
+      params:
+        C: 1.0                   # inverse reg strength; 1.0 is a neutral start
+        max_iter: 1000           # raised so the solver converges on scaled data
+
+    main:
+      name: xgboost
+      params:
+        n_estimators: 300
+        max_depth: 5
+        learning_rate: 0.1
+        subsample: 0.9
+        colsample_bytree: 0.9
+        random_state: 42
