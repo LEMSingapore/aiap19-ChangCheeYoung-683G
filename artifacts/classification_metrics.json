@@ -1,0 +1,198 @@
+{
+  "task": "classification",
+  "best_model": "xgboost",
+  "models": [
+    {
+      "name": "logistic_regression",
+      "cv_score": 0.714341481841157,
+      "cv_std": 0.006610337867036229,
+      "test_metrics": {
+        "accuracy": 0.7163,
+        "macro_f1": 0.7135003659481418,
+        "per_class": {
+          "Fruiting Vegetables \u2014 Maturity": {
+            "precision": 0.6164574616457462,
+            "recall": 0.5416666666666666,
+            "f1-score": 0.5766470971950424,
+            "support": 816.0
+          },
+          "Fruiting Vegetables \u2014 Seedling": {
+            "precision": 0.8962962962962963,
+            "recall": 0.9803240740740741,
+            "f1-score": 0.9364289662797125,
+            "support": 864.0
+          },
+          "Fruiting Vegetables \u2014 Vegetative": {
+            "precision": 0.6190975865687304,
+            "recall": 0.7091346153846154,
+            "f1-score": 0.6610644257703081,
+            "support": 832.0
+          },
+          "Herbs \u2014 Maturity": {
+            "precision": 0.48366013071895425,
+            "recall": 0.4431137724550898,
+            "f1-score": 0.4625,
+            "support": 835.0
+          },
+          "Herbs \u2014 Seedling": {
+            "precision": 0.9301745635910225,
+            "recall": 0.8934131736526946,
+            "f1-score": 0.9114233353695785,
+            "support": 835.0
+          },
+          "Herbs \u2014 Vegetative": {
+            "precision": 0.45734597156398105,
+            "recall": 0.46172248803827753,
+            "f1-score": 0.4595238095238095,
+            "support": 836.0
+          },
+          "Leafy Greens \u2014 Maturity": {
+            "precision": 0.666232073011734,
+            "recall": 0.6097852028639618,
+            "f1-score": 0.636760124610592,
+            "support": 838.0
+          },
+          "Leafy Greens \u2014 Seedling": {
+            "precision": 0.9364089775561097,
+            "recall": 0.8898104265402843,
+            "f1-score": 0.9125151883353585,
+            "support": 844.0
+          },
+          "Leafy Greens \u2014 Vegetative": {
+            "precision": 0.6450867052023121,
+            "recall": 0.6813186813186813,
+            "f1-score": 0.66270783847981,
+            "support": 819.0
+          },
+          "Vine Crops \u2014 Maturity": {
+            "precision": 0.711276332094176,
+            "recall": 0.7008547008547008,
+            "f1-score": 0.7060270602706027,
+            "support": 819.0
+          },
+          "Vine Crops \u2014 Seedling": {
+            "precision": 0.8751458576429405,
+            "recall": 0.9057971014492754,
+            "f1-score": 0.8902077151335311,
+            "support": 828.0
+          },
+          "Vine Crops \u2014 Vegetative": {
+            "precision": 0.728310502283105,
+            "recall": 0.7649880095923262,
+            "f1-score": 0.7461988304093568,
+            "support": 834.0
+          },
+          "accuracy": 0.7163,
+          "macro avg": {
+            "precision": 0.7137910381812591,
+            "recall": 0.7151607427408874,
+            "f1-score": 0.7135003659481418,
+            "support": 10000.0
+          },
+          "weighted avg": {
+            "precision": 0.7146936393523909,
+            "recall": 0.7163,
+            "f1-score": 0.7145195648360498,
+            "support": 10000.0
+          }
+        }
+      }
+    },
+    {
+      "name": "xgboost",
+      "cv_score": 0.782324517175323,
+      "cv_std": 0.0036024011199200586,
+      "test_metrics": {
+        "accuracy": 0.7852,
+        "macro_f1": 0.7838279635981077,
+        "per_class": {
+          "Fruiting Vegetables \u2014 Maturity": {
+            "precision": 0.7972292191435768,
+            "recall": 0.7757352941176471,
+            "f1-score": 0.7863354037267081,
+            "support": 816.0
+          },
+          "Fruiting Vegetables \u2014 Seedling": {
+            "precision": 0.9471264367816092,
+            "recall": 0.9537037037037037,
+            "f1-score": 0.9504036908881199,
+            "support": 864.0
+          },
+          "Fruiting Vegetables \u2014 Vegetative": {
+            "precision": 0.775175644028103,
+            "recall": 0.7956730769230769,
+            "f1-score": 0.7852906287069988,
+            "support": 832.0
+          },
+          "Herbs \u2014 Maturity": {
+            "precision": 0.4880201765447667,
+            "recall": 0.46347305389221555,
+            "f1-score": 0.47542997542997545,
+            "support": 835.0
+          },
+          "Herbs \u2014 Seedling": {
+            "precision": 0.9371293001186239,
+            "recall": 0.9461077844311377,
+            "f1-score": 0.9415971394517283,
+            "support": 835.0
+          },
+          "Herbs \u2014 Vegetative": {
+            "precision": 0.4753521126760563,
+            "recall": 0.48444976076555024,
+            "f1-score": 0.47985781990521326,
+            "support": 836.0
+          },
+          "Leafy Greens \u2014 Maturity": {
+            "precision": 0.7097203728362184,
+            "recall": 0.636038186157518,
+            "f1-score": 0.670862177470107,
+            "support": 838.0
+          },
+          "Leafy Greens \u2014 Seedling": {
+            "precision": 0.9988137603795967,
+            "recall": 0.9976303317535545,
+            "f1-score": 0.998221695317131,
+            "support": 844.0
+          },
+          "Leafy Greens \u2014 Vegetative": {
+            "precision": 0.6696935300794552,
+            "recall": 0.7203907203907204,
+            "f1-score": 0.6941176470588235,
+            "support": 819.0
+          },
+          "Vine Crops \u2014 Maturity": {
+            "precision": 0.8125755743651754,
+            "recall": 0.8205128205128205,
+            "f1-score": 0.8165249088699879,
+            "support": 819.0
+          },
+          "Vine Crops \u2014 Seedling": {
+            "precision": 0.9891956782713085,
+            "recall": 0.9951690821256038,
+            "f1-score": 0.9921733895243829,
+            "support": 828.0
+          },
+          "Vine Crops \u2014 Vegetative": {
+            "precision": 0.8032596041909197,
+            "recall": 0.8273381294964028,
+            "f1-score": 0.8151210868281158,
+            "support": 834.0
+          },
+          "accuracy": 0.7852,
+          "macro avg": {
+            "precision": 0.7836076174512843,
+            "recall": 0.7846851620224959,
+            "f1-score": 0.7838279635981077,
+            "support": 10000.0
+          },
+          "weighted avg": {
+            "precision": 0.784189201348412,
+            "recall": 0.7852,
+            "f1-score": 0.7843767481633677,
+            "support": 10000.0
+          }
+        }
+      }
+    }
+  ]
+}

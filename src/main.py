@@ -19,6 +19,7 @@ import logging
 import sys
 
 from feature_engineering import build_features
+from models import save_artifacts, train_and_evaluate
 from preprocessing import get_clean_data
 
 TASKS = ("regression", "classification")
@@ -57,10 +58,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def run_task(task: str) -> None:
-    """Run the pipeline for a single task.
+    """Run the full pipeline for a single task.
 
-    At this stage the slice ends after feature engineering and reports the
-    resulting matrix shapes. Model training and evaluation are added next.
+    Loads and cleans the data, builds task-specific features, trains and
+    evaluates a baseline and a gradient-boosted model, then persists the best
+    model and a metrics summary to the artifacts directory.
 
     Args:
         task (str): Either ``"regression"`` or ``"classification"``.
@@ -72,10 +74,12 @@ def run_task(task: str) -> None:
 
     df = get_clean_data()
     X, y, transformer = build_features(df, task)
-
     log.info("Feature matrix : %d rows x %d columns", X.shape[0], X.shape[1])
-    log.info("Target         : '%s' (%d distinct values)", y.name, y.nunique())
-    log.info("Task '%s' slice complete.", task)
+
+    best, all_results, label_encoder = train_and_evaluate(X, y, transformer, task)
+    save_artifacts(task, best, all_results, label_encoder)
+
+    log.info("Task '%s' complete.", task)
 
 
 def main(argv: list[str] | None = None) -> int:
